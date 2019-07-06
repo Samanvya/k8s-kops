@@ -1,0 +1,64 @@
+
+
+
+#KOPS Config
+#gossip based cluster cluster.k8s.local
+
+$KOPS_STATE_STORE = "s3://nay-k8s"
+$KOPS_NAME = "nay.k8s.local"
+
+kops create secret — name ${KOPS_NAME} sshpublickey admin -i ~/.ssh/id_rsa.pub
+
+kops create cluster nay.k8s.local --zones ap-southeast-2a --state ${KOPS_STATE_STORE}/
+
+#kops create cluster — zones ap-south-1a,ap-south-1b — topology private — networking calico — master-size t2.micro — master-count 3 — node-size t2.large ${NAME}
+
+kops edit cluster --name=${KOPS_NAME} --state ${KOPS_STATE_STORE}	
+#edit your node instance group: 
+kops edit ig --name=${KOPS_NAME} nodes --state ${KOPS_STATE_STORE}	
+#edit your master instance group: 
+kops edit ig --name=${KOPS_NAME} master-us-east1-b --state ${KOPS_STATE_STORE}
+
+kops get cluster --state ${KOPS_STATE_STORE}
+kops get cluster --state ${KOPS_STATE_STORE}/ nay.k8s.local -oyaml
+kops get --name=${KOPS_NAME} --state ${KOPS_STATE_STORE}/ -oyaml
+
+#Finally configure your cluster with: 
+kops update cluster nay.k8s.local --state ${KOPS_STATE_STORE}
+kops update cluster nay.k8s.local --state ${KOPS_STATE_STORE} --yes
+
+while (1) {kops validate cluster --name ${KOPS_NAME} --state ${KOPS_STATE_STORE}; sleep 5}
+
+kops rolling-update cluster --yes
+
+#When done delete Cluster:
+kops delete cluster --name ${KOPS_NAME}
+kops delete cluster --name ${KOPS_NAME} --state ${KOPS_STATE_STORE} --yes
+
+Suggestions:
+ * validate cluster: kops validate cluster
+ * list nodes: kubectl get nodes --show-labels
+ * ssh to the master: ssh -i ~/.ssh/id_rsa admin@api.nay.k8s.local
+ * the admin user is specific to Debian. If not using Debian please use the appropriate user based on your OS.
+ * read about installing addons at: https://github.com/kubernetes/kops/blob/master/docs/addons.md.
+
+kubectl get pods --all-namespaces
+kubectl get nodes
+kubectl -n kube-system get po
+kubectl config view
+
+kubectl run pod1 --image=nginx
+deployment "pod1" created
+
+kubectl get pods
+NAME READY STATUS RESTARTS AGE
+pod1-7c9dd54f98-q8wsg 1/1 Running 0 7s
+
+#For Testing you can use spot instances to save costs
+#kops create ig nodes-spot — role node — subnet ap-south-1a,ap-south-1b — name ${KOPS_NAME}
+#machineType: t2.large
+#  maxPrice: "0.01"
+#  maxSize: 2
+#  minSize: 1
+
+#aws ec2 describe-spot-price-history --instance-types t3.large --start-time 2019-04-19T07:08:09 --end-time 2019-04-19T08:09:10

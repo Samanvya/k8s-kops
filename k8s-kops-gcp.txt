@@ -1,0 +1,56 @@
+
+$env:GOOGLE_APPLICATION_CREDENTIALS="Location of Googles JSON file.json"
+#Location of Googles JSON file
+
+gsutil mb gs://nay-k8s
+
+$KOPS_STATE_STORE = "gs://nay-k8s"
+$KOPS_NAME = "nay.k8s.local"
+$PROJECT = "multi-cloud-failover-demo"
+#$PROJECT= `gcloud config get-value project`
+
+$env:KOPS_FEATURE_FLAGS="AlphaAllowGCE"
+ # to unlock the GCE features
+
+kops create cluster nay.k8s.local --zones us-east1-b --state ${KOPS_STATE_STORE}/ --project=${PROJECT}
+
+kops edit cluster --name=${KOPS_NAME} --state ${KOPS_STATE_STORE}	
+#edit your node instance group: 
+kops edit ig --name=${KOPS_NAME} nodes --state ${KOPS_STATE_STORE}	
+#edit your master instance group: 
+kops edit ig --name=${KOPS_NAME} master-us-east1-b --state ${KOPS_STATE_STORE}
+
+kops get cluster --state ${KOPS_STATE_STORE}
+kops get cluster --state ${KOPS_STATE_STORE}/ nay.k8s.local -oyaml
+kops get --name=${KOPS_NAME} --state ${KOPS_STATE_STORE}/ -oyaml
+
+#Finally configure your cluster with:
+kops update cluster nay.k8s.local --state ${KOPS_STATE_STORE}
+kops update cluster nay.k8s.local --state ${KOPS_STATE_STORE} --yes
+
+while (1) {kops validate cluster --name ${KOPS_NAME} --state ${KOPS_STATE_STORE}; sleep 5}
+
+kops rolling-update cluster --yes
+
+#When done delete Cluster:
+kops delete cluster --name ${KOPS_NAME}
+kops delete cluster --name ${KOPS_NAME} --state ${KOPS_STATE_STORE} --yes
+
+Suggestions:
+ * validate cluster: kops validate cluster
+ * list nodes: kubectl get nodes --show-labels
+ * ssh to the master: ssh -i ~/.ssh/id_rsa admin@api.nay.k8s.local
+ * the admin user is specific to Debian. If not using Debian please use the appropriate user based on your OS.
+ * read about installing addons at: https://github.com/kubernetes/kops/blob/master/docs/addons.md.
+
+kubectl get pods --all-namespaces
+kubectl get nodes
+kubectl -n kube-system get po
+kubectl config view
+
+kubectl run pod1 --image=nginx
+deployment "pod1" created
+
+kubectl get pods
+NAME READY STATUS RESTARTS AGE
+pod1-7c9dd54f98-q8wsg 1/1 Running 0 7s
