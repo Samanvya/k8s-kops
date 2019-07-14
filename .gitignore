@@ -2,6 +2,7 @@ terraform.tfplan
 terraform.tfstate
 ./*.tfstate
 .terraform/
+in.*/
 *.in
 *.bakup
 *.log

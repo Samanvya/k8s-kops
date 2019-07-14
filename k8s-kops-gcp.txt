@@ -6,7 +6,7 @@ gsutil mb gs://nay-k8s
 
 $KOPS_STATE_STORE = "gs://nay-k8s"
 $KOPS_NAME = "nay.k8s.local"
-$PROJECT = "multi-cloud-failover-demo"
+$PROJECT = "ypurproject"
 #$PROJECT= `gcloud config get-value project`
 
 $env:KOPS_FEATURE_FLAGS="AlphaAllowGCE"
