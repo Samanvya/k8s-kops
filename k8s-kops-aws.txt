@@ -1,18 +1,23 @@
 
+#Kubernetes cluster on AWS using KOPS
 
-
+====================================================================================
+KOPS Create Cluster
+====================================================================================
 #KOPS Config
 #gossip based cluster cluster.k8s.local
 
 $KOPS_STATE_STORE = "s3://nay-k8s"
 $KOPS_NAME = "nay.k8s.local"
 
+kops create secret --name ${KOPS_NAME} sshpublickey admin -i ~/.ssh/id_rsa.pub
+
 kops create cluster --name ${KOPS_NAME} --zones ap-southeast-2a --state ${KOPS_STATE_STORE}
+kops get cluster
 
-#kops create cluster — zones ap-south-1a,ap-south-1b — topology private — networking calico — master-size t2.micro — master-count 3 — node-size t2.large ${NAME}
-
-kops create secret  sshpublickey admin -i ~/.ssh/id_rsa.pub --name ${KOPS_NAME} --state ${KOPS_STATE_STORE}
-
+====================================================================================
+KOPS Edit Cluster config
+====================================================================================
 kops edit cluster --name=${KOPS_NAME} --state ${KOPS_STATE_STORE}	
 #edit your node instance group: 
 kops edit ig --name=${KOPS_NAME} nodes --state ${KOPS_STATE_STORE}	
@@ -23,7 +28,9 @@ kops get cluster --state ${KOPS_STATE_STORE}
 kops get cluster --state ${KOPS_STATE_STORE}/ nay.k8s.local -oyaml
 kops get --name=${KOPS_NAME} --state ${KOPS_STATE_STORE}/ -oyaml
 
+====================================================================================
 #Finally configure your cluster with: 
+====================================================================================
 kops update cluster --name ${KOPS_NAME} --state ${KOPS_STATE_STORE}
 kops update cluster --name ${KOPS_NAME}l --state ${KOPS_STATE_STORE} --yes
 
@@ -31,10 +38,14 @@ while (1) {kops validate cluster --name ${KOPS_NAME} --state ${KOPS_STATE_STORE}
 
 kops rolling-update cluster --yes
 
+====================================================================================
 #When done delete Cluster:
+====================================================================================
 kops delete cluster --name ${KOPS_NAME}
 kops delete cluster --name ${KOPS_NAME} --state ${KOPS_STATE_STORE} --yes
 
+====================================================================================
+====================================================================================
 Suggestions:
  * validate cluster: kops validate cluster
  * list nodes: kubectl get nodes --show-labels
